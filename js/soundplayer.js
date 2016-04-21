@@ -1,6 +1,7 @@
 var AUDIO = (function(ns){
 	var context = new AudioContext();
 	var depth = 3;
+	var scaletone = [0.75, 0.83333, 0.944, 1,1.12,1.25,1.333,1.5,1.666,1.8888,2]
 	function soundNode(org, freq, start, len)
 	{
 		var starttime = start;
@@ -81,20 +82,32 @@ var AUDIO = (function(ns){
     	return {player : t, length : length};
     }
 	}
+	function getTone(val)
+	{
+		var i;
+		for(i=0 ; i<scaletone.length ; i++)
+		{
+			if(scaletone[i]<=val && scaletone[i+1]>=val)
+			{
+				return (scaletone[i+1]-val>val-scaletone[i])?scaletone[i]:scaletone[i+1];
+			}
+		}
+		return scaletone[0];
+	}
 	function createRythm(level, stride, drive, st, fi)
 	{
-		if(level>depth || fi-st<0.1)
+		var s = stride>drive?1:stride/drive;
+		var d = stride<drive?1:drive/stride;
+		if(level>depth || fi-st<0.2)
 		{
 				var t = [];
 				t[0] = 440;
-				t[1] = 1 * drive/stride;
+				t[1] = getTone(d<1?Math.random()*0.8+0.4:d);
 				t[2] = st;
 				t[3] = (fi-st);
 				return [t];
 		}
 		else {
-			var s = stride>drive?1:stride/drive;
-			var d = stride<drive?1:drive/stride;
 			var i;
 			var r = [];
 			var v = Math.random() * 1.5 + 0.5;
@@ -122,7 +135,7 @@ var AUDIO = (function(ns){
 		context = new AudioContext();
 		var dyn = context.createDynamicsCompressor();
 		dyn.connect(context.destination);
-		playsequence = createRythm(0,50,20,0,4);
+		playsequence = createRythm(0, 50, 20, 0, 4);
 		for(var i=0 ; i<playsequence.length ; i++)
 		{
 			var node = new soundNode(playsequence[i][0], playsequence[i][1], playsequence[i][2], playsequence[i][3]);
