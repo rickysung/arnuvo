@@ -1,5 +1,6 @@
 var AUDIO = (function(ns){
-	var context;
+	var context = new AudioContext();
+	var depth = 3;
 	function soundNode(org, freq, start, len)
 	{
 		var starttime = start;
@@ -44,11 +45,11 @@ var AUDIO = (function(ns){
 			var adsrObj =
 			{
 				attackLimit : 1.0,
-				attackSlope : 0.3,
-				decaySlope : 0.1,
+				attackSlope : 0.01,
+				decaySlope : 0.05,
 				sustainlevel: new Float32Array([0.6,0.5]),
-				sustainTime : 0.5,
-				releaseSlope : 1.0
+				sustainTime : 0.1,
+				releaseSlope : 0.1
 			};
     	if(freq.constructor === Array)
     	{
@@ -80,37 +81,28 @@ var AUDIO = (function(ns){
     	return {player : t, length : length};
     }
 	}
-	function createRythm(stride, drive, len, div)
+	function createRythm(level, stride, drive, st, fi)
 	{
-		var s = stride>drive?1:stride/drive;
-		var d = stride<drive?1:drive/stride;
-		var i;
-		var r = [];
-		for(i=0 ; i<div ; i++)
+		if(level>depth || fi-st<0.1)
 		{
-			var t = [];
-			var cof = Math.random();
-			var sc = s - (s * i/div);
-			var dc = d * i/div;
-			t[0] = 0;
-			t[1] = 0;
-			t[2] = len * i/div;
-			t[3] = 0;
-			if(cof<sc)
-			{
-				t[0] = 180;
-				t[1] = 1;
-				t[3] = len/div *(Math.random() + 1);
-			}
-			if(cof<dc)
-			{
-				t[0] = 280;
-				t[1] = Math.random()+1;
-				t[3] = len/div * (Math.random()+0.1);
-			}
-			r[i] = t;
+				var t = [];
+				t[0] = 440;
+				t[1] = 1 * drive/stride;
+				t[2] = st;
+				t[3] = (fi-st);
+				return [t];
 		}
-		return r;
+		else {
+			var s = stride>drive?1:stride/drive;
+			var d = stride<drive?1:drive/stride;
+			var i;
+			var r = [];
+			var v = Math.random() * 1.5 + 0.5;
+			v *= (stride+drive)/2;
+			r = r.concat(createRythm(level+s, stride, v, st, st + (fi-st)/2));
+			r = r.concat(createRythm(level+d, v, drive, st + (fi-st)/2, fi));
+			return r;
+		}
 	}
 	ns.playsound = function()
 	{
@@ -126,10 +118,11 @@ var AUDIO = (function(ns){
 		//			[org2, 2,9,0.5]];
 		var timer = 0.3;
 		var diff = 10;
+		context.close();
 		context = new AudioContext();
 		var dyn = context.createDynamicsCompressor();
 		dyn.connect(context.destination);
-//		playsequence = createRythm(10,10,2,4);
+		playsequence = createRythm(0,50,20,0,4);
 		for(var i=0 ; i<playsequence.length ; i++)
 		{
 			var node = new soundNode(playsequence[i][0], playsequence[i][1], playsequence[i][2], playsequence[i][3]);
@@ -139,7 +132,7 @@ var AUDIO = (function(ns){
 
 	ns.repeat = function()
 	{
-		setInterval(ns.playsound,10000);
+		setInterval(ns.playsound,4000);
 	}
 	return ns;
 })(AUDIO || {});
