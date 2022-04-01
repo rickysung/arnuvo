@@ -1,1 +1,150 @@
+<!DOCTYPE html>
+<!-- HTML5 Hello world by kirupa - http://www.kirupa.com/html5/getting_your_feet_wet_html5_pg1.htm -->
+<html lang="en-us">
 
+<head>
+	<meta charset="utf-8">
+	<title>집에가고싶다.</title>
+	<script type="text/javascript" src="js/plate.js"></script>
+	<script type="text/javascript">
+		var canvas;
+		var p;
+
+		function keepfullscreen() {
+			var canvas = document.getElementById('main');
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+		}
+
+		function init() {
+			canvas = document.getElementById('main');
+			p = new plate(canvas);
+			p.init();
+		}
+	</script>
+	<style type="text/css">
+		body {
+			margin: 0;
+			padding: 0;
+			width: 100%;
+			height: 100%;
+			position: absolute;
+			background-color: #121216;
+		}
+		
+		#node {
+			background-color: #EEAA00;
+			width: 8px;
+			height: 8px;
+			position: absolute;
+			top: 10px;
+			left: 50px;
+		}
+		
+		canvas {
+			position: absolute;
+		}
+	</style>
+</head>
+
+<body onload="keepfullscreen();
+		init();">
+	<canvas id='main'>
+	</canvas>
+	<script>
+		var canvas = document.getElementById('main');
+		var context = canvas.getContext('2d');
+		var sttime = 0;
+		var endtime = 0;
+		var isMove = false;
+		var isMoved = false;
+		var stx, sty;
+		var dx, dy;
+		function getMousePos(canvas, evt) {
+			var rect = canvas.getBoundingClientRect();
+			return {
+				x: evt.clientX - rect.left - p.getLocationX(),
+				y: evt.clientY - rect.top - p.getLocationY()
+			};
+		}
+		function getAbsolutePos(canvas, evt)
+		{
+			var rect = canvas.getBoundingClientRect();
+			return {
+				x: evt.clientX - rect.left,
+				y: evt.clientY - rect.top
+			};
+		};
+		canvas.addEventListener('mousedown', function(evt) {
+			var mousePos;
+			var absolPos;
+			switch(evt.which)
+			{
+				case 1:
+					mousePos = getMousePos(canvas, evt);
+					stx = mousePos.x;
+					sty = mousePos.y;
+					break;
+				case 2:
+					mousePos = getMousePos(canvas, evt);
+					stx = mousePos.x;
+					sty = mousePos.y;
+					sttime = Date.now();
+					absolPos = getAbsolutePos(canvas, evt);
+					dx = absolPos.x;
+					dy = absolPos.y;
+					break;
+				case 3:
+					break;
+				default:
+					break;
+			}
+		}, true);
+		canvas.addEventListener('mousemove', function(evt) {
+			var mousePos;
+			var absolPos;
+			switch(evt.which)
+			{
+				case 0:
+					mousePos = getMousePos(canvas, evt);
+					p.focusPoint(mousePos.x,mousePos.y);
+					break;
+				case 1:
+					break;
+				case 2:
+					absolPos = getAbsolutePos(canvas, evt);
+					mousePos = getMousePos(canvas, evt);
+					p.setPosition(p.getLocationX() + mousePos.x - stx, p.getLocationY() + mousePos.y - sty);
+					if(Date.now()-sttime>200)
+					{	
+						sttime = Date.now();
+						dx = absolPos.x;
+						dy = absolPos.y;
+					}
+					break;
+				case 3:
+					break;
+			}
+		}, true);
+		canvas.addEventListener('mouseup', function(evt) {
+			switch(evt.which)
+			{
+				case 1:
+					var mousePos = getMousePos(canvas, evt);
+					p.action(stx, sty, mousePos.x, mousePos.y);
+					break;
+				case 2:
+					var absolPos = getAbsolutePos(canvas, evt);
+					endtime = Date.now();
+					var vx = absolPos.x - dx;
+					var vy = absolPos.y - dy;
+					p.throwplate(vx * 10/(endtime-sttime) ,vy * 10/(endtime-sttime));
+					break;
+			}
+			isMove = false;
+		}, true);
+	</script>
+
+</body>
+
+</html>
